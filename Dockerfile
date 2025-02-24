@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-RUN pip install Flask google-cloud-storage gunicorn
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set environment variable for Google Cloud credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS="./flask-storage-access-a0832d4a7f1b.json"
