@@ -16,7 +16,7 @@ storage_client = storage.Client()
 bucket = storage_client.bucket(GCS_BUCKET_NAME)
 
 # Configure Google Gemini API
-google_ai.configure(api_key='AIzaSyBiymSeFOky24cEw9hA_CcOT-ULMGOE43Y')
+google_ai.configure(api_key='xxxxxxxxxxxxxxxxxxxxxxxxx')
 model = google_ai.GenerativeModel('gemini-1.5-flash')  # Using 'gemini-pro'
 
 # Allowed file extensions
