@@ -3,17 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Upload</title>
+    <title>Image Gallery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .gallery-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .image-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            width: 320px;
+            text-align: left;
+        }
+        .image-card img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        .image-card h3 {
+            margin: 10px 0 5px;
+            font-size: 16px;
+            color: #444;
+        }
+        .image-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload an Image</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="image">
-        <button type="submit">Upload</button>
-    </form>
-    <h2>Uploaded Images</h2>
-    {% for image in images %}
-        <img src="{{ image }}" alt="Uploaded Image" width="200">
-    {% endfor %}
+    <h1>📷 Uploaded Images with AI Descriptions</h1>
+    <div class="gallery-container">
+        {% for image in images %}
+        <div class="image-card">
+            <img src="{{ image.url }}" alt="Not visible because of private bucket">
+            <h3>📝 Description:</h3>
+            <p>{{ image.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
 </body>
 </html>
