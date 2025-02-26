@@ -14,6 +14,33 @@
         h1 {
             color: #333;
         }
+        .upload-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            width: 50%;
+            margin: 0 auto 20px auto;
+        }
+        .upload-container input {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 80%;
+        }
+        .upload-container button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .upload-container button:hover {
+            background-color: #218838;
+        }
         .gallery-container {
             display: flex;
             flex-wrap: wrap;
@@ -45,13 +72,26 @@
     </style>
 </head>
 <body>
-    <h1>📷 Uploaded Images with AI Descriptions</h1>
+    <h1>📷 Upload & View Images with AI Descriptions</h1>
+
+    <!-- Upload Form -->
+    <div class="upload-container">
+        <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" required>
+            <button type="submit">Upload Image</button>
+        </form>
+    </div>
+
+    <!-- Image Gallery -->
     <div class="gallery-container">
         {% for image in images %}
         <div class="image-card">
-            <img src="{{ image.url }}" alt="Not visible because of private bucket">
+            <img src="{{ image.url }}" alt="No Preview (Private Bucket)">
+            <h3>🖼️ Caption:</h3>
+            <p><strong>{{ image.caption }}</strong></p>
             <h3>📝 Description:</h3>
             <p>{{ image.description }}</p>
+            
         </div>
         {% endfor %}
     </div>
