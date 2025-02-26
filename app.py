@@ -10,13 +10,16 @@ import io
 
 app = Flask(__name__)
 
+# Configure Google Cloud Storage
 GCS_BUCKET_NAME = 'my_flask_bucket_for_project'
 storage_client = storage.Client()
 bucket = storage_client.bucket(GCS_BUCKET_NAME)
 
-google_ai.configure(api_key='xxxxxxxxxxxxxxxxxxxxxxxx')
-model = google_ai.GenerativeModel('gemini-1.5-flash') 
+# Configure Google Gemini API
+google_ai.configure(api_key='AIzaSyBiymSeFOky24cEw9hA_CcOT-ULMGOE43Y')
+model = google_ai.GenerativeModel('gemini-1.5-flash')  # Using 'gemini-pro'
 
+# Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
@@ -25,6 +28,7 @@ def allowed_file(filename):
 def call_google_gemini_ai(prompt, image_bytes):
     try:
         response = model.generate_content([prompt,image_bytes])
+        #print("Raw AI Response:", response)
         return response.text
     
     except Exception as e:
@@ -56,32 +60,38 @@ def clean_and_parse_json(text):
 
 @app.route('/')
 def index():
-    blobs = bucket.list_blobs()
-    
+    blobs = list(bucket.list_blobs())  # Ensure all images are listed
     images_with_metadata = []
     
     for blob in blobs:
         if blob.name.endswith('.json'):
-            continue  # Skip JSON files when listing images
+            continue  # Skip JSON metadata files
+
+        image_url = blob.public_url  # Ensure the URL is accessible (depends on bucket settings)
         
-        image_url = blob.public_url  # This will only work if public access is enabled
-        
-        # Fetch associated metadata
+        # Fetch associated metadata (description + caption)
         json_blob_name = f"{os.path.splitext(blob.name)[0]}.json"
         json_blob = bucket.blob(json_blob_name)
         
         description = "No description available"
+        caption = "No caption available"
+        
         if json_blob.exists():
             json_data = json_blob.download_as_text()
             try:
                 metadata = json.loads(json_data)
                 description = metadata.get("description", "No description available")
+                caption = metadata.get("caption", "No caption available")
             except json.JSONDecodeError:
                 pass
         
-        images_with_metadata.append({"url": image_url, "description": description})
+        images_with_metadata.append({"url": image_url, "description": description, "caption": caption})
 
+    print(f"Total images found: {len(images_with_metadata)}")  # Debugging count
     return render_template('index.html', images=images_with_metadata)
+
+
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -99,11 +109,14 @@ def upload():
     blob = bucket.blob(filename)
     blob.upload_from_file(image, content_type=image.content_type)
 
+    # Analyze image with Gemini API
     image.seek(0)
     image_data = image.read()
     image.seek(0)
 
+    # Convert image to bytes for AI
     pil_image = Image.open(io.BytesIO(image_data))
+    # Define the AI Prompt
     prompt = """
     Analyze the uploaded image and respond in the following JSON format:
     {
@@ -117,16 +130,19 @@ def upload():
     if not ai_response:
         return jsonify({"error": "AI did not return a response"}), 500
 
+    # Clean and parse the response
     parsed_response = clean_and_parse_json(ai_response)
 
     if not parsed_response:
         return jsonify({"error": "Failed to parse AI response"}), 500
 
+    # Prepare metadata
     metadata = {
         "description": parsed_response.get("description", "No description available"),
         "caption": parsed_response.get("caption", "No caption available")
     }
 
+    # Upload metadata as JSON to Cloud Storage
     json_blob = bucket.blob(f"{os.path.splitext(filename)[0]}.json")
     json_blob.upload_from_string(json.dumps(metadata), content_type='application/json')
 
