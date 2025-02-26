@@ -57,8 +57,31 @@ def clean_and_parse_json(text):
 @app.route('/')
 def index():
     blobs = bucket.list_blobs()
-    image_urls = [blob.public_url for blob in blobs if not blob.name.endswith('.json')]
-    return render_template('index.html', images=image_urls)
+    
+    images_with_metadata = []
+    
+    for blob in blobs:
+        if blob.name.endswith('.json'):
+            continue  # Skip JSON files when listing images
+        
+        image_url = blob.public_url  # This will only work if public access is enabled
+        
+        # Fetch associated metadata
+        json_blob_name = f"{os.path.splitext(blob.name)[0]}.json"
+        json_blob = bucket.blob(json_blob_name)
+        
+        description = "No description available"
+        if json_blob.exists():
+            json_data = json_blob.download_as_text()
+            try:
+                metadata = json.loads(json_data)
+                description = metadata.get("description", "No description available")
+            except json.JSONDecodeError:
+                pass
+        
+        images_with_metadata.append({"url": image_url, "description": description})
+
+    return render_template('index.html', images=images_with_metadata)
 
 @app.route('/upload', methods=['POST'])
 def upload():
